@@ -19,6 +19,13 @@ class Options {
    * many non-blank records are in that sheet. The former is faster while the latter is more accurate.
    */
   prioritizeSpeed = false;
+
+  /**
+   * When this is true, Ob2ss will clear the cache after every major operation.
+   * ---
+   * This will be removed eventually.
+   */
+  wipeCacheEveryOperation = false;
 }
 
 export {Options}

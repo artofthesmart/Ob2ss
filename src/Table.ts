@@ -1,7 +1,6 @@
 import { ObjectUtilities } from './ObjectUtilities';
 import { Options } from './Options'
 import { SheetUtilities } from './SheetUtilities';
-import { Timer } from './Timer';
 
 /**
  * This class represents a virtual table on top of a sheet.
@@ -142,7 +141,6 @@ class Table {
 
   clear(){
     this.sheet.clear();
-    this.sUtils.clearCache();
   }
 
   destroy(){

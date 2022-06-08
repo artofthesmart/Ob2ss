@@ -1,6 +1,5 @@
 import { ObjectUtilities } from './ObjectUtilities';
 import { Options } from "./Options";
-import { Table } from './Table';
 import { Timer } from './Timer';
 
 /**
@@ -14,69 +13,56 @@ class SheetUtilities {
   private options:Options;
   private oUtils:ObjectUtilities;
 
-  // Calls to SpreadsheetApp are crazy costly, so this is a caching area.
-  private _dataRange?:GoogleAppsScript.Spreadsheet.Range;
-  private _headerRange?:GoogleAppsScript.Spreadsheet.Range;
-  private _bodyRange?:GoogleAppsScript.Spreadsheet.Range;
-
-  private _headerArray?:string[];
-  private _bodyArray?:any[][];
-  private _numHeaderRows?:number;
-  private _numBodyRows?:number;
-  private _numColumns?:number;
-  private _maxRows?:number;
-
   constructor(sheet:GoogleAppsScript.Spreadsheet.Sheet, options?:Options){
     this.sheet = sheet;
     this.options = options || new Options();
     this.oUtils = new ObjectUtilities(this.options);
   }
-  
-  /**
-   * Clears the cache, usually after an add or remove operation.
-   * ---
-   * TODO: We don't need to invalidate everything every time, but we do anyway.
-   */
-  clearCache(){
-     this._dataRange = undefined;
-     this._headerRange = undefined;
-     this._bodyRange = undefined;
 
-     this._headerArray = undefined;
-     this._bodyArray = undefined;
-     this._numHeaderRows = undefined;
-     this._numBodyRows = undefined;
-     this._numColumns = undefined;
-     this._maxRows = undefined;
+  private cache:{[varable:string]:any} = {};  
+  cacheGet<Type>(name:string, generator:() => Type):Type{
+    let timer = new Timer(name);
+    if (this.cache[name] == undefined) this.cache[name] = generator();
+    timer.stop();
+
+    return <Type>this.cache[name];
   }
 
-  get dataRange(){
-    let t = new Timer('getDataRange()');
-    if (this._dataRange == undefined){
-      this._dataRange = this.sheet.getDataRange();
-    }
-    t.stop();
+  /**
+   * Updates the cache if the variable already exists.
+   * @param name The name of the variable to update.
+   * @param generator A function to run to update the variable. If it returns a value, the cache is set to that value.
+   * if it returns null, then the variable is not set to that value.
+   */
+  cacheUpdateRun<Type>(name:string, generator: () => Type){
+    if (this.cache[name] != undefined) generator();
+  }
 
-    if (this._dataRange == undefined) throw '_dataRange not defined';
-    return this._dataRange;
+  cacheUpdateSet<Type>(name:string, generator: () => Type){
+    if (this.cache[name] != undefined){
+      this.cache[name] = generator();
+    }
+  }
+
+  /////////////////////////////////////////
+  // GETTERS   ////////////////////////////
+  /////////////////////////////////////////
+  get dataRange(){
+    return this.cacheGet('dataRange', () => {
+      return this.sheet.getDataRange();
+    });
   }
 
   get headerRange(){
-    let t = new Timer('getHeaderRange()');
-    if (this._headerRange == undefined){
+    return this.cacheGet('headerRange', () => {
       const headerRow = this.numHeaderRows - this.options.headerOffset; // 1 based.
       const numCols = this.numColumns;
-      this._headerRange = this.sheet.getRange(headerRow, 1, 1, numCols);
-    }
-    t.stop();
-
-    if (this._headerRange == undefined) throw '_headerRange not defined';
-    return this._headerRange;
+      return this.sheet.getRange(headerRow, 1, 1, numCols);
+    });
   }
 
   get bodyRange(){
-    let t = new Timer('getBodyRange()');
-    if (this._bodyRange == undefined){
+    return this.cacheGet('bodyRange', () => {
       const sheet = this.sheet;
       const firstRow = this.numHeaderRows + 1; // 1 based.
       const numRows = this.numBodyRows;
@@ -85,73 +71,50 @@ class SheetUtilities {
       /**
        * New, blank sheets (24 x 1000 cells) appear to have a body but have 0 data rows.
        * Return a 1 cell range in these cases so the pruner can do it's job.
-       * TODO: Harmonize with callers of hasBody() and the pruner so we get a predictable state earlier.
        */
-      this._bodyRange = numRows == 0 ? sheet.getRange(1, 1, 1, 1) : sheet.getRange(firstRow, 1, numRows, numCols);
-    }
-    
-    t.stop();
-    if (this._bodyRange == undefined) throw '_bodyRange not defined';
-    return this._bodyRange;
+      return numRows == 0 ? sheet.getRange(1, 1, 1, 1) : sheet.getRange(firstRow, 1, numRows, numCols);
+    });
   }
 
   get headerArray(){
-    let t = new Timer('getHeadersAsArray()');
-    if (this._headerArray == undefined){
-      this._headerArray = this.headerRange.getValues()[0];
-    }
-    t.stop();
-    if (this._headerArray == undefined) throw '_headerArray not defined';
-    return this._headerArray
+    return this.cacheGet('headerArray', () => {
+      return this.headerRange.getValues()[0];
+    });
   }
 
   get bodyArray(){
-    let t = new Timer('getBodyAsArray()');
-    if (this._bodyArray == undefined){
-      this._bodyArray = this.bodyRange.getValues();
-    }
-    t.stop();
-    if (this._bodyArray == undefined) throw '_bodyArray not defined';
-    return this._bodyArray
+    return this.cacheGet('bodyArray', () => {
+      return this.bodyRange.getValues();
+    });
   }
 
   get numHeaderRows(){
-    if (this._numHeaderRows == undefined) {
-      this._numHeaderRows = this.sheet.getFrozenRows() || 1;
-    }
-    if (this._numHeaderRows == undefined) throw '_numHeaderRows not defined';
-    return this._numHeaderRows
+    return this.cacheGet('numHeaderRows', () => {
+      return this.sheet.getFrozenRows() || 1;
+    });
   }
 
   get numBodyRows(){
-    let t = new Timer('getNumBodyRows()');
-    if (this._numBodyRows == undefined){
-      this._numBodyRows = this.maxRows - this.numHeaderRows; //1-based.
-    }
-    t.stop();
-    if (this._numBodyRows == undefined) throw '_numBodyRows not defined';
-    return this._numBodyRows
+    return this.cacheGet('numBodyRows', () => {
+      return this.maxRows - this.numHeaderRows; //1-based.
+    });
   }
 
   get numColumns(){
-    if (this._numColumns == undefined){
-      this._numColumns = this.dataRange.getNumColumns();
-    }
-    if (this._numColumns == undefined) throw '_numColumns not defined';
-    return this._numColumns;
+    return this.cacheGet('numColumns', () => {
+      return this.sheet.getMaxColumns();
+    });
   }
 
   get maxRows(){
-    let t = new Timer('getMaxRows()');
-    if (this._maxRows == undefined){
-      this._maxRows = this.dataRange.getNumRows();
-    }
-    t.stop();
-    if (this._maxRows == undefined) throw '_maxRows not defined';
-    return this._maxRows;
+    return this.cacheGet('maxRows', () => {
+      return this.dataRange.getNumRows();
+    });
   }
 
-  ////////////////////////////////////////////////////////////
+  /////////////////////////////////////////
+  // WRITERS   ////////////////////////////
+  /////////////////////////////////////////
   
   addAt(rows:any[][], index:number){
     let t = new Timer('addAt()');
@@ -171,14 +134,17 @@ class SheetUtilities {
      */
     if (!this.hasBody()) { // No body.
       sheet.insertRowsAfter(lastHeaderRow, numAdds);
+      this.cacheUpdateRun('bodyArray', () => this.cache['bodyArray'].unshift(rows));
       targetRange = this.sheet.getRange(firstBodyRow, 1, numAdds, numCols);
     } 
     else if (index < 0) { // Append.
       sheet.insertRowsAfter(numRows, numAdds);
+      this.cacheUpdateSet('bodyArray', () => this.cache['bodyArray'].concat(rows));
       targetRange = this.sheet.getRange(numRows + 1, 1, numAdds, numCols);
     }
     else if (index == 0) { // Prepend.
       sheet.insertRowsBefore(firstBodyRow, numAdds);
+      this.cacheUpdateRun('bodyArray', () => this.cache['bodyArray'].unshift(rows));
       targetRange = this.sheet.getRange(firstBodyRow, 1, numAdds, numCols);
     } 
     else if (index > numRows - lastHeaderRow) { // Overflow.
@@ -187,13 +153,18 @@ class SheetUtilities {
     else if (index > 0) { // Valid index.
       const realIndex = index + lastHeaderRow;
       sheet.insertRowsBefore(realIndex, numAdds);
+      this.cacheUpdateRun('bodyArray', () => this.cache['bodyArray'].splice(index-1, 0, rows));
       targetRange = this.sheet.getRange(realIndex, 1, numAdds, numCols);
     }
 
     if (!targetRange) throw 'Could not getBodyRange(), even after adding rows in addAt().';
     targetRange.setValues(rows);
 
-    this.clearCache();
+    this.cacheUpdateSet('dataRange', () => this.dataRange.offset(0,0,this.maxRows+numAdds, this.numColumns));
+    this.cacheUpdateSet('bodyRange', () => this.bodyRange.offset(0,0,this.numBodyRows+numAdds, this.numColumns));
+    this.cacheUpdateSet('maxRows', () => this.maxRows + numAdds);
+    this.cacheUpdateSet('numBodyRows', () => this.numBodyRows + numAdds);
+
     t.stop();
   }
 
@@ -296,7 +267,9 @@ class SheetUtilities {
       targetRange.setValues(rowValues);
     });
 
-    this.clearCache();
+    // Either way this value is now wrong.
+    // TODO: Update the array cache rather than invalidating.
+    this.cacheUpdateSet('bodyArray', () => null);
   }
   
   removeIndices(indices:number[]){
@@ -314,10 +287,18 @@ class SheetUtilities {
       const row = batch[0] + firstBodyRow - 1; // The last batch element is the highest integer- our target row.
 
       this.sheet.deleteRows(row, length);
+      this.cacheUpdateRun('bodyArray', () => this.cache['bodyArray'].splice(batch[0], length));
     }
 
     t.stop();
-    this.clearCache();
+    // Already did this._bodyArray
+    this.cacheUpdateSet('maxRows', () => this.maxRows - indices.length);
+    this.cacheUpdateSet('numBodyRows', () => this.numBodyRows - indices.length);
+    this.cacheUpdateSet('dataRange', () => this.dataRange.offset(0, 0, this.maxRows, this.numColumns));
+    this.cacheUpdateSet('bodyRange', () => {
+      if (this.hasBody()) return this.bodyRange.offset(0, 0, this.numBodyRows, this.numColumns);
+      else return undefined; // Never set a zero-height range.
+    });
   }
 
   ////////////////////////////////
@@ -326,6 +307,7 @@ class SheetUtilities {
 
   hasBody(){
     let t = new Timer('hasBody()');
+    let bodyRows = this.numBodyRows;
     let result = this.numBodyRows != 0;
     t.stop();
     return result;
@@ -369,7 +351,6 @@ class SheetUtilities {
     // If the expected headers aren't there, extend headers.
     if (!expectedHeaders.every((header) => oldHeaders.includes(header))){
       this.extendHeaders(expectedHeaders);
-      this.clearCache();
     }      
     
     t.stop();
@@ -396,18 +377,27 @@ class SheetUtilities {
     const oldHeaders = this.headerArray;
     const oldLength = oldHeaders.length;
 
-    let headerRange = this.headerRange;
-
     // TODO: Consider allowing field reduction.
     if (newLength < oldLength) throw 'Cannot reduce columns yet.';
+
     if (newHeaders.every((header) => oldHeaders.includes(header))) return;
 
     // Insert new columns to support the combined length and update the range.
     sheet.insertColumnsAfter(oldLength, newLength - oldLength);
-    headerRange = headerRange.offset(0, 0, 1, newLength); // Faster.
     
-    headerRange.setValues([newHeaders]); // 2d array
-    this.clearCache();
+    // Deep overwrite of cache with the header range with the new length.
+    // We know it exists (we just used it) and know it needs to change.
+    this.cacheUpdateSet('headerRange', () => this.headerRange.offset(0, 0, 1, newLength));
+    this.headerRange.setValues([newHeaders]); // 2d array
+    
+    this.cacheUpdateSet('dataRange', () => this.dataRange.offset(0, 0, this.maxRows, newLength))
+    this.cacheUpdateSet('bodyRange', () => this.bodyRange.offset(0, 0, this.numBodyRows, newLength))
+    this.cacheUpdateSet('bodyArray', () => {
+      let blankAppendage = new Array(newLength - oldLength);
+      this.bodyArray.map((row) => row.concat(blankAppendage))
+    });
+    this.cacheUpdateSet('headerArray', () => newHeaders);
+    this.cacheUpdateSet('numColumns', () => newLength);
     t.stop();
   }
 

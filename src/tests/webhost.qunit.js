@@ -7,7 +7,7 @@ var Qunit = QUnitGS2.QUnit; // Lower-case to avoid collisions.
 function doGet() {
    QUnitGS2.init();
 
-   //testSheetUtilities(Qunit);
+   testSheetUtilities(Qunit);
    //testTable(Qunit);
 
    //pressureTest(Qunit);
