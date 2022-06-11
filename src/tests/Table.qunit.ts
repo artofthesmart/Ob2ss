@@ -29,7 +29,7 @@ function testTable(QUnit:QUnit){
     QUnit.test(`End to End testing.`, (assert) => {
       let table = new Table(sheet, options);
       assert.equal(table.getCount(), 20, 'Returns correct initial count.');
-      assert.equal(table.getColumnValues('email').length, 20, 'Returns correct column length.');
+      assert.equal(table.getColumnAsArray('email').length, 20, 'Returns correct column length.');
 
       assert.equal(table.getFirst()[0].email, 'cfoan0@arizona.edu', 'Returns correct first item.');
       assert.equal(table.getLast()[0].email, 'mkumaarj@nhs.uk', 'Returns correct first item.');

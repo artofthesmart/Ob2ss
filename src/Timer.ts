@@ -1,7 +1,7 @@
 /**
  * A simple timer to help with benchmarking.
  */
-class Timer {
+export class Timer {
   private method:string;
   private start:Date;
   private logFunction:(method:string, time:number)=>void;
@@ -23,5 +23,3 @@ class Timer {
     return time;
   }
 }
-
-export {Timer};

@@ -1,6 +1,5 @@
 import { ObjectUtilities } from './ObjectUtilities';
 import { Options } from "./Options";
-import { Timer } from './Timer';
 
 /**
  * Manages most sheet operations for a `table`.
@@ -8,7 +7,7 @@ import { Timer } from './Timer';
  * Most sheet operations happen here, so if you're looking to make Ob2ss faster, this is the place to start. Calls to
  * the sheet are the most time-intensive code.
  */
-class SheetUtilities {
+export class SheetUtilities {
   private sheet:GoogleAppsScript.Spreadsheet.Sheet;
   private options:Options;
   private oUtils:ObjectUtilities;
@@ -21,9 +20,7 @@ class SheetUtilities {
 
   private cache:{[varable:string]:any} = {};  
   cacheGet<Type>(name:string, generator:() => Type):Type{
-    let timer = new Timer(name);
     if (this.cache[name] == undefined) this.cache[name] = generator();
-    timer.stop();
 
     return <Type>this.cache[name];
   }
@@ -39,7 +36,7 @@ class SheetUtilities {
   }
 
   cacheUpdateSet<Type>(name:string, generator: () => Type){
-    if (this.cache[name] != undefined){
+    if (this.cache[name] != undefined) {
       this.cache[name] = generator();
     }
   }
@@ -117,7 +114,6 @@ class SheetUtilities {
   /////////////////////////////////////////
   
   addAt(rows:any[][], index:number){
-    let t = new Timer('addAt()');
     const sheet = this.sheet;
     const numAdds = rows.length;
     const lastHeaderRow = this.numHeaderRows;
@@ -164,31 +160,24 @@ class SheetUtilities {
     this.cacheUpdateSet('bodyRange', () => this.bodyRange.offset(0,0,this.numBodyRows+numAdds, this.numColumns));
     this.cacheUpdateSet('maxRows', () => this.maxRows + numAdds);
     this.cacheUpdateSet('numBodyRows', () => this.numBodyRows + numAdds);
-
-    t.stop();
   }
 
   getCount(){
-    let t = new Timer('getCount()');
     const value = this.numBodyRows;
-    t.stop();
     return value;
   }
 
   getSequence(skip:number, take:number){
-    let t = new Timer('getSequence()');
     const bodyRange = this.bodyRange;
     const numRows = this.numBodyRows;
 
     take = Math.min(numRows - skip, take); // Return the lower of the request or num rows remaining.
 
     const values = bodyRange.offset(skip, 0, take).getValues();
-    t.stop();
     return values;
   }
 
   getColumns(headers:string[]){
-    let t = new Timer('getColumns()');
     // TODO: This uses more memory than necessary, but executes MUCH faster. 
     const allData = this.bodyArray;
     const allHeaders = this.headerArray;
@@ -198,25 +187,22 @@ class SheetUtilities {
     const values = allData.map((row:any[]) => {
       return headerIndices.map((index) => row[index]);
     });
-    t.stop();
+
     return values;
   }
 
   getLikeObjects(selector:(candidate:any) => boolean){
-    let t = new Timer('getLikeObjects()');
     const bodyData = this.bodyArray;
     const headers = this.headerArray;
 
     const allObjects = this.oUtils.convertToObjects(bodyData, headers);
 
     let filteredObjects = allObjects.filter((obj) => selector(obj));
-    t.stop();
 
     return filteredObjects;
   }
   
   getLikeIndices(selector:(candidate:object) => boolean){
-    let t = new Timer('getLikeIndices()');
     const bodyData = this.bodyArray;
     const headers = this.headerArray;
     const oUtils = this.oUtils;
@@ -228,7 +214,6 @@ class SheetUtilities {
       else return -1;
     }).filter((index:number) => index != -1);
 
-    t.stop();
     return filteredIndices;
   }
 
@@ -273,8 +258,6 @@ class SheetUtilities {
   }
   
   removeIndices(indices:number[]){
-    let t = new Timer('removeIndices()');
-
     const bundledIndices = this.oUtils.bundleIndices(indices);
     const firstBodyRow = this.numHeaderRows + 1;
 
@@ -290,8 +273,7 @@ class SheetUtilities {
       this.cacheUpdateRun('bodyArray', () => this.cache['bodyArray'].splice(batch[0], length));
     }
 
-    t.stop();
-    // Already did this._bodyArray
+    // Already did bodyArray
     this.cacheUpdateSet('maxRows', () => this.maxRows - indices.length);
     this.cacheUpdateSet('numBodyRows', () => this.numBodyRows - indices.length);
     this.cacheUpdateSet('dataRange', () => this.dataRange.offset(0, 0, this.maxRows, this.numColumns));
@@ -306,10 +288,9 @@ class SheetUtilities {
   ////////////////////////////////
 
   hasBody(){
-    let t = new Timer('hasBody()');
     let bodyRows = this.numBodyRows;
     let result = this.numBodyRows != 0;
-    t.stop();
+
     return result;
   }
 
@@ -319,7 +300,6 @@ class SheetUtilities {
    * @returns A cell range reference to the column.
    */
   getColumnRange(header:string){
-    let t = new Timer('getColumnRange()');
     const sheet = this.sheet;
     const rowIndex = this.numHeaderRows + 1;
     const numRows = this.numBodyRows;
@@ -328,21 +308,18 @@ class SheetUtilities {
     if (columnIndex == -1) throw `Column "${header}" not found.`;
 
     const range = sheet.getRange(rowIndex, columnIndex, numRows, 1);
-    t.stop();
+
     return range;
   }
 
   // Returns the column as a single array with each index representing the body row.
   getColumnAsArray(header:string){
-    let t = new Timer('getColumnAsArray()');
     const values = this.getColumnRange(header).getValues().map((row) => row[0]);
-    t.stop();
+
     return values;
   }
   
   prepareHeaders(objects:object[]){
-    let t = new Timer('prepareHeaders()');
-
     // Necessary properties
     const newHeaders = this.oUtils.getAllHeaders(objects);
     const oldHeaders = this.headerArray;
@@ -352,8 +329,6 @@ class SheetUtilities {
     if (!expectedHeaders.every((header) => oldHeaders.includes(header))){
       this.extendHeaders(expectedHeaders);
     }      
-    
-    t.stop();
   }
 
   /**
@@ -370,24 +345,21 @@ class SheetUtilities {
    * have new headers at the end of the array of old headers.
    */
   extendHeaders(newHeaders:string[]){
-    let t = new Timer('extendHeaders()');
-
     const sheet = this.sheet;
     const newLength = newHeaders.length;
     const oldHeaders = this.headerArray;
     const oldLength = oldHeaders.length;
+    const columnsToAdd = newLength - oldLength;
 
-    // TODO: Consider allowing field reduction.
+    // TODO: Consider allowing column reduction.
     if (newLength < oldLength) throw 'Cannot reduce columns yet.';
 
-    if (newHeaders.every((header) => oldHeaders.includes(header))) return;
-
-    // Insert new columns to support the combined length and update the range.
-    sheet.insertColumnsAfter(oldLength, newLength - oldLength);
+    // Add columns & update range cache.
+    if (columnsToAdd > 0) {
+      sheet.insertColumnsAfter(oldLength, columnsToAdd);
+      this.cacheUpdateSet('headerRange', () => this.headerRange.offset(0, 0, 1, newLength));
+    }
     
-    // Deep overwrite of cache with the header range with the new length.
-    // We know it exists (we just used it) and know it needs to change.
-    this.cacheUpdateSet('headerRange', () => this.headerRange.offset(0, 0, 1, newLength));
     this.headerRange.setValues([newHeaders]); // 2d array
     
     this.cacheUpdateSet('dataRange', () => this.dataRange.offset(0, 0, this.maxRows, newLength))
@@ -398,12 +370,9 @@ class SheetUtilities {
     });
     this.cacheUpdateSet('headerArray', () => newHeaders);
     this.cacheUpdateSet('numColumns', () => newLength);
-    t.stop();
   }
 
   indicesToRanges(indices:number[]){
-    let t = new Timer('indicesToRanges()');
-
     const bodyRange = this.bodyRange;
     const numCols = this.numColumns;
 
@@ -415,7 +384,6 @@ class SheetUtilities {
       return newRange;
     });
     
-    t.stop();
     return ranges;
   }
 
@@ -430,5 +398,3 @@ class SheetUtilities {
     if (maxCols > numCols) sheet.deleteColumns(numCols + 1, maxCols - numCols);
   }
 }
-
-export {SheetUtilities}

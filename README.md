@@ -1,11 +1,56 @@
 # Ob2SS: The Google Sheets Database
-Ob2SS (**Ob**ject **To** **S**pread**S**heet) is an Apps Script library that lets you use a Google Spreadsheet as a database for your small projects. There's no setup required, works on any JavaScript object, and lets you create hybrid spreadsheet applications more easily.
+Ob2SS (**Ob**ject **To** **S**pread**S**heet) is an Apps Script library that lets you use a Google Spreadsheet as a
+database for your small projects. There's no setup required, works on any JavaScript object, and lets you create hybrid
+spreadsheet applications more easily.
 
-This documentation will be focused on the maintenance of the library.  Please visit the project website for implementation details, caveats, and examples.
+Features include:
+1. **Well documented** - no one can be expected to memorize how every interface works. Ob2ss has documentation here, on
+   the [project website](http://ob2ss.com), and directly in the Apps Script IDE via JSDocs!
+2. **Robust** - does exactly what it says in the documentation.
+3. **Speed** - the library implements caching to make your calls speedy and efficient.
+4. **Simplicity** - you can get started without writing a single line of initialization! Or you can open existing
+   spreadsheets to read and write data you already have.
+
+---
+
+This documentation is just a quick start guide and documentation on maintaining the library.  I highly recommend you visit the [project website](http://ob2ss.com) for implementation details, caveats, and examples.
 
 http://ob2ss.com
 
-## Working Notes & Scratch Pad
+## Quickstart Guide
+
+To start using Ob2ss right away, you can add it as a library to your project.  Here's the library ID:
+
+```
+10r01m6-bM7-Ksz1ccwIceIdxmKyjd7LvqUtw8C6FupcLjgoBecG_Q2dv
+```
+
+Add Libraries to your project through the "Libraries" pane.
+
+![Click the plus in the "Libraries" Pane.](step_1.png)
+
+![Add the library ID, click "Look Up", and click "Add".](step_2.png)
+
+And you're done! Now you can start calling Ob2ss from your project.
+
+
+## Downloading, Building, Maintaining
+
+This is a relatively large Apps Script project, so we use node and webpack.
+
+Get set up by cloning the project to your local directory, then install dependencies with `npm install`.
+
+Review `package.json` to see the build commands, but:
+1. `push-staging` will push files mostly as-is to a project. This facilitates debugging.
+2. `push-production` will compile to the API and push the compiled version to where the library is hosted.
+
+**Important Notes**:
+1. Please keep comments synchronized between `api.js` and `Ob2ss.ts`. Optionally with `Table.ts` and
+   `SheetUtilities.ts`, too.
+2. Use Jest tests for local testing away from the Apps Script ecosystem.
+3. Use QUnit for testing in Apps Script for end-to-end that requires interacting with Apps Script globals.
+
+
 
 `api.ts` is responsible for exposing library functionality and documentation. No real code should be happening in there.
 This pattern is necessary because Apps Script Libraries can only expose documentation from top level functions. It's

@@ -112,7 +112,7 @@ function readingTest(){
   t.stop();
 
   t = new Timer('Table.getColumnValues(1)', logFunction);
-  records = table.getColumnValues('email');
+  records = table.getColumnAsArray('email');
   records.pop();
   t.stop();
 }

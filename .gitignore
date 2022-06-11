@@ -3,3 +3,4 @@ dist
 compiled
 .clasp.*.*
 appsscript.json
+package-lock.json

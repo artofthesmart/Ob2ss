@@ -9,7 +9,7 @@ import {Options} from './Options';
  * **LIMITATIONS**
  * 1. Only strings, numbers, booleans, and arrays of those types may be written and read. Yes really.
  */
-class ObjectUtilities {
+export class ObjectUtilities {
   options:Options;
 
   constructor(options?:Options){
@@ -212,5 +212,3 @@ class ObjectUtilities {
     }, []);
   }
 }
-
-export {ObjectUtilities}

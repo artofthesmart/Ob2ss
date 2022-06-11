@@ -1,13 +1,14 @@
 const path = require ('path');
 const TerserPlugin = require('terser-webpack-plugin');
-const GasPlugin = require('gas-webpack-plugin');
 
 const config = {
   mode: 'production',
-  entry: './src/api.ts',
+  entry: './src/Backend.ts',
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: 'ob2ss.bundle.js',
+    filename: '_ob2ss.bundle.js',
+    libraryTarget: 'var',
+    library: '_AppLib_'
   },
   module: {
     rules: [
@@ -16,6 +17,23 @@ const config = {
         use: ['ts-loader'],
         exclude: /node_modules/,
       },
+      {
+        test: /\.js$/,
+        exclude: /(node_modules|bower_components)/,
+        use: {
+          loader: 'babel-loader',
+          options: {
+            presets: [
+              [
+                '@babel/preset-env',
+                {
+                  useBuiltIns: 'usage'
+                }
+              ]
+            ]
+          }
+        }
+      }
     ],
   },
 
@@ -36,11 +54,6 @@ const config = {
   resolve: {
     extensions: ['.ts'],
   },
-
-  // Required to ensure API functions are exposed by the library.
-  plugins: [
-    new GasPlugin()
-  ]
 };
 
 module.exports = config;

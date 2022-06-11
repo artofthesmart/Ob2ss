@@ -6,7 +6,7 @@ import { Table } from "./Table";
  * ---
  * In particular, it's responsible for managing default sheets and tables.
  */
-class Backend {
+export class Backend {
   private spreadsheet?:GoogleAppsScript.Spreadsheet.Spreadsheet;
   private options:Options;
 
@@ -142,5 +142,3 @@ class Backend {
     delete this.tables[tableName];
   }
 }
-
-export {Backend}

@@ -1,9 +1,7 @@
-import {Backend} from './Backend';
-
-// The API file exports functionality from the library and has pretty documentation.
-// global as any is for `gas-webpack-plugin` to export as top-level functions.
-
-let Ob2ss = new Backend();
+/**
+ * A backend instance that accesses data.
+ */
+let backend_ = new _AppLib_.Backend();
 
 /**
  * Sets a spreadsheet as the "database".
@@ -12,20 +10,22 @@ let Ob2ss = new Backend();
  * "tables".
  * 
  * If you do not call `open`, Ob2ss will default to the following, in order:
- * 1. A bound spreadsheet, if available.
+ * 1. A [bound spreadsheet](https://developers.google.com/apps-script/guides/bound), if available.
  * 2. A new spreadsheet with its name set to the script running Ob2ss. If one already exists, Ob2ss will use that.
  * 
  * @param {Spreadsheet} spreadsheet A Spreadsheet to open as an Ob2ss database.
  */
-(global as any).open = (spreadsheet:GoogleAppsScript.Spreadsheet.Spreadsheet) => Ob2ss.open(spreadsheet);
+function open(spreadsheet){
+  return backend_.open(spreadsheet);
+}
 
 /**
  * Sets a table as the default so you can call operations directly.
  * ---
- * Setting a table as default means you can call other Ob2ss functions directly (e.g. `Ob2ss.append()`) and they'll
+ * Setting a table as default means you can call other Ob2ss functions directly (e.g. `Ob2ss.addAppend()`) and they'll
  * operate on that default table. This serves two purposes:
  * 1. You don't have to use `Ob2ss.getTableByName()` before every call, and
- * 2. You can see the JSDoc documentation in the Apps Script IDE for when you _do_ need to use `Ob2ss.getTableByName()`.
+ * 2. You can see the JSDoc documentation in the Apps Script IDE for when you _do_ want to use `Ob2ss.getTableByName()`.
  * 
  * _Example:_
  * ```
@@ -39,29 +39,37 @@ let Ob2ss = new Backend();
  * 
  * @param {string} tableName The name of the sheet to set as the default.
  */
-(global as any).doSetDefaultTable = (tableName:string) => Ob2ss.doSetDefaultTable(tableName);
+function doSetDefaultTable(tableName){
+  return backend_.doSetDefaultTable(tableName);
+}
 
 /**
  * Clears an entire sheet of its contents.
  * ---
  * This will delete all the records in a sheet. This is useful for testing or resetting a database. A `tableName` is
  * required and not inferred via any other calls to help avoid accidentally clearing a useful table.
+ * @param {string} tableName The name of the sheet to clear.
  */
-(global as any).doClear = (tableName:string) => Ob2ss.doClear(tableName);
+function doClear(tableName){
+	return backend_.doClear(tableName);
+}
 
 /**
  * Deletes an entire sheet.
  * ---
  * This will delete a sheet from the Spreadsheet. This is useful for testing or resetting a database. A `tableName` is
  * required and not inferred via any other calls to help avoid accidentally deleting a useful table.
+ * @param {string} tableName The name of the sheet to delete.
  */
-(global as any).doDestroy = (tableName:string) => Ob2ss.doDestroy(tableName);
+function doDestroy(tableName){
+	return backend_.doDestroy(tableName);
+}
 
 /**
  * Fetches an Ob2ss table where you can write and read objects.
  * ---
  * This is optional and returns a table you can call functions against like `addAppend()` or `deleteLike()`. If you call
- * those functions directly against Ob2ss, they'll run on the default table. You can set the default table with
+ * those functions on Ob2ss, they'll run on the default table. You can set the default table with
  * `doSetDefaultTable()` if you want to simplify your code. If you do not use this function and do not use
  * `doSetDefaultTable()` then Ob2ss will operate on a table called `default`.
  * 
@@ -74,8 +82,11 @@ let Ob2ss = new Backend();
  * Ob2ss.doSetDefaultTable('cars');
  * Ob2ss.addAppend(obj);
  * ```
+ * @param {string} tableName The name of the sheet to fetch.
  */
-(global as any).getTableByName = (tableName:string) => Ob2ss.getTableByName(tableName);
+function getTableByName(tableName){
+	return backend_.getTableByName(tableName);
+}
 
 ////////////////////////////////
 /////// WRITE //////////////////
@@ -87,9 +98,11 @@ let Ob2ss = new Backend();
  * Converts the provided array of objects into rows, and adds them to the bottom of the spreadsheet. This means
  * they'll appear at the end of the array of all objects stored.
  * 
- * @param {[object]} objects An array of objects to insert into the sheet.
+ * @param {object[]} objects An array of objects to insert into the sheet.
  */
-(global as any).addAppend = (objects:[object]) => Ob2ss.default.addAppend(objects);
+function addAppend(objects){
+	return backend_.default.addAppend(objects);
+}
 
 /**
  * Adds objects to the top (beginning) of the sheet.
@@ -97,9 +110,11 @@ let Ob2ss = new Backend();
  * Converts the provided array of objects into rows, and adds them to the top of the spreadsheet. This means
  * they'll appear at the beginning of the array of all objects stored.
  * 
- * @param {[object]} objects An array of objects to insert into the sheet.
+ * @param {object[]} objects An array of objects to insert into the sheet.
  */
-(global as any).addPrepend = (objects:[object]) => Ob2ss.default.addPrepend(objects);
+function addPrepend(objects){
+	return backend_.default.addPrepend(objects);
+}
 
 /**
  * Adds objects at the specified position in the sheet.
@@ -114,14 +129,26 @@ let Ob2ss = new Backend();
  * ```
  * This code will insert the new cars after the first 4 cars in the table, at indices 5 through 9.
  * 
- * @param {[object]} objects An array of objects to insert into the sheet.
+ * @param {object[]} objects An array of objects to insert into the sheet.
  * @param {number} index The position in the "data" to insert the objects.
  */
-(global as any).addAt = (objects:[object], index:number) => Ob2ss.default.addAt(objects, index);
+function addAt(objects, index){
+	return backend_.default.addAt(objects, index);
+}
 
 ////////////////////////////////
 /////// READ ///////////////////
 ////////////////////////////////
+
+/**
+ * Gets the number of objects in the sheet.
+ * ---
+ * Gets the total number of objects currently in the sheet.
+ * @returns {number} The number of records in this sheet.
+ */
+function getCount(){
+	return backend_.default.getCount();
+}
 
 /**
  * Returns all objects from the sheet.
@@ -129,15 +156,9 @@ let Ob2ss = new Backend();
  * Returns every object in the sheet as an array, in order.
  * @returns {object[]} An array of objects.
  */
-(global as any).getAll = () => Ob2ss.default.getAll();
-
-  /**
-   * Gets the number of objects in the sheet.
-   * ---
-   * Gets the total number of objects currently in the sheet.
-   * @returns The number of records in this sheet.
-   */
-(global as any).getCount = () => Ob2ss.default.getCount();
+ function getAll(){
+	return backend_.default.getAll();
+ }
 
 /**
  * Returns one or more first ("top") objects.
@@ -149,7 +170,9 @@ let Ob2ss = new Backend();
  * @param {number} count [Optional] The number of top objects to return. If not supplied, the default is 1.
  * @returns {object[]} An array of objects representing the requested rows.
  */
-(global as any).getFirst = (count?:number) => Ob2ss.default.getFirst(count);
+function getFirst(count){
+	return backend_.default.getFirst(count);
+}
 
 /**
  * Returns one or more last ("bottom") objects.
@@ -163,23 +186,27 @@ let Ob2ss = new Backend();
  * @param {number} count [Optional] The number of top objects to return. If not supplied, the default is 1.
  * @returns {object[]} An array of objects representing the requested rows.
  */
-(global as any).getLast = (count?:number) => Ob2ss.default.getLast(count);
+function getLast(count){
+	return backend_.default.getLast(count);
+}
 
 /**
  * Returns a number of rows after skipping some.
  * ---
  * This function will fetch and return any number of objects starting at an arbitrary position in the sheet. For
- * example, `Ob2ss.getRange(5, 3)` will return the 6th, 7th, and 8th objects from the default sheet.
+ * example, `Ob2ss.getRange(5, 3)` will return the 6th, 7th, and 8th objects from the sheet.
  * 
  * **Notes**
  * 1. The `skip` parameter refers to the data range of the sheet. If you have 3 header rows in your sheet and
- *    you skip 3, Ob2ss will begin taking at row 7.
+ *    you skip 3, Ob2ss will begin taking at row 7 (that's index 4).
  * 2. If there are fewer rows available than were requested by the `count` parameter, those will be returned.
  * @param {number} skip The number of rows to skip. Remember that this is 1 based.
  * @param {number} count The number of rows to try to read and return.
  * @returns {object[]} An array of objects representing the requested rows.
 */
-(global as any).getSequence = (skip:number, count:number) => Ob2ss.default.getSequence(skip, count);
+function getSequence(skip, count){
+	return backend_.default.getSequence(skip, count);
+}
 
 /**
  * Returns the requested columns for all objects.
@@ -198,7 +225,9 @@ let Ob2ss = new Backend();
  * @param {[string]} headers An array of strings representing the headers to fetch.
  * @returns {[object]} A 2-dimensional array representing the column values.
  */
-(global as any).getColumns = (headers:string[]) => Ob2ss.default.getColumns(headers);
+function getColumns(headers){
+	return backend_.default.getColumns(headers);
+}
 
 /**
  * Gets a single column as a flat array.
@@ -208,14 +237,17 @@ let Ob2ss = new Backend();
  * @param {string} header The header to fetch.
  * @returns {any[]} A 1-D array of values of the column from top to bottom.
  */
-(global as any).getColumnAsArray = (header:string) => Ob2ss.default.getColumnValues(header);
+function getColumnAsArray(header){
+	return backend_.default.getColumnAsArray(header);
+}
 
 /**
  * Returns objects filtered by the selector function.
  * ---
  * _Example:_
  * ```
- * Ob2ss.getTableByName('cars').getLike((car) => {
+ * Ob2ss.getTableByName('cars').getLike((car){
+	{
  *   return car.model == 'camry' && car.year > 2016);
  * }
  * ```
@@ -223,28 +255,35 @@ let Ob2ss = new Backend();
  * indicating whether it should be selected.
  * @returns {object[]} An array of objects the `selector` selected.
  */
-(global as any).getLike = (selector:(candidate:object) => boolean) => Ob2ss.default.getLike(selector);
+function getLike(selector){
+  return backend_.default.getLike(selector);
+}
+  
 
 /////// UPDATE ///////
 /**
  * Finds and changes objects in the table.
  * ---
- * Changes the fields of objects found with the `selector` and applies the `mutator` to them before writing them back to
- * the sheet. Objects are updated in-place and don't move. Updated fields can include new fields. 
+ * Changes the fields of objects found with the `selector` and applies the `mutator` to them before writing the mutator
+ * result them back to the sheet. Objects are updated in-place and don't move. Updated fields can include new fields. 
  * 
  * _Example:_
  * ```
  * Ob2ss.getTableByName('cars').updateLike(
- *   (car) => car.make == 'ford',
- *   (car) => { car.last_wash_date = Date.now(); return car; }
+ *   (car){
+	car.make == 'ford',
+ *   (car){
+	{ car.last_wash_dateDate.now(); return car; }
  * );
  * ```
  * @param {function} selector A function callback that accepts one argument (a candidate object) and returns a boolean
  * indicating whether it should be selected.
  * @param {function} mutator A function callback that accepts one argument (an object) and returns an object to replace
- * it.
+ * it. Don't forget to return the resultant object!
  */
-(global as any).updateLike = (selector:(candidate:object) => boolean, mutator:(target:object) => object) => Ob2ss.default.updateLike(selector, mutator);
+function updateLike(selector, mutator){
+	return backend_.default.updateLike(selector, mutator);
+}
 
 /////// DELETE ///////
 /**
@@ -254,9 +293,12 @@ let Ob2ss = new Backend();
  * 
  * _Example:_
  * ```
- * Ob2ss.getTableByName('cars').removeLike((car) => car.make == 'saturn');
+ * Ob2ss.getTableByName('cars').removeLike((car){
+	car.make == 'saturn');
  * ```
  * @param {function} selector A function callback that accepts one argument (a candidate object) and returns a boolean
  * indicating whether it should be selected.
  */
-(global as any).removeLike = (selector:(candidate:object) => boolean) => Ob2ss.default.removeLike(selector);
+function removeLike(selector){
+	return backend_.default.removeLike(selector);
+}
