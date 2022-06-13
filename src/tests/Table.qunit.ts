@@ -62,12 +62,12 @@ function testTable(QUnit:QUnit){
 
       table.addAppend([v1]);
       table.addPrepend([v2]);
-      table.addAt([v3], 5);
+      table.addAt(5, [v3]);
       assert.equal(table.getFirst()[0].id, 22, 'Correctly prepended an item.');
       assert.equal(table.getLast()[0].id, 21, 'Correctly prepended an item.');
       assert.equal(table.getSequence(4, 3)[0].id, 23, 'Correctly prepended an item.');
     
-      table.addAt([v1,v2,v3], 12);
+      table.addAt(12, [v1,v2,v3]);
       assert.equal(table.getCount(), 26, 'Added multiple objects at once.');
 
       table.removeLike(target => target.id > 20);

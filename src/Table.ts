@@ -42,7 +42,8 @@ export class Table {
    * @param {object[]} objects An array of objects to insert into the sheet.
    */
   addAppend(objects:object[]){
-    this.addAt(objects, -1);
+    if (!Array.isArray(objects)) objects = [objects];
+    this.addAt( -1, objects);
   }
 
   /**
@@ -54,7 +55,8 @@ export class Table {
    * @param {object[]} objects An array of objects to insert into the sheet.
    */
   addPrepend(objects:object[]){
-    this.addAt(objects, 0);
+    if (!Array.isArray(objects)) objects = [objects];
+    this.addAt(0, objects);
   }
 
   /**
@@ -73,7 +75,8 @@ export class Table {
    * @param {object[]} objects An array of objects to insert into the sheet.
    * @param {number} index The position in the "data" to insert the objects.
    */
-  addAt(objects:object[], index:number){
+  addAt(index:number, objects:object[]){
+    if (!Array.isArray(objects)) objects = [objects];
     if (objects.length == 0) return; // Skip empties.
 
     this.sUtils.prepareHeaders(objects);

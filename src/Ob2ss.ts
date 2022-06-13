@@ -140,8 +140,8 @@ export class Ob2ss{
 	 * @param {object[]} objects An array of objects to insert into the sheet.
 	 * @param {number} index The position in the "data" to insert the objects.
 	 */
-	addAt(objects:object[], index:number){
-		this.backend.default.addAt(objects, index);
+	addAt(index:number, objects:object[]){
+		this.backend.default.addAt(index, objects);
 	}
 
 	////////////////////////////////

@@ -159,11 +159,11 @@ function addingTest(){
   t.stop();
 
   t = new Timer('Table.addAt(1)', logFunction);
-  table.addAt([records[0]], 10);
+  table.addAt(10, [records[0]]);
   t.stop();
 
   t = new Timer('Table.addAt(100)', logFunction);
-  table.addAt(records, 50);
+  table.addAt(50, records);
   t.stop();
 
   table.destroy();
