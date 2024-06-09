@@ -98,6 +98,7 @@ Ob2ss likes tight sheets. Remove empty columns and empty rows for improved accur
 An index is a position in the array of all objects in the sheet.
 
 Going from JS => Sheets => JS has weird implications.
+
 0. Avoid blanks in general. Try to avoid writing emptiness.
 1. Sheets has only one way of conveying emptiness- a blank cell. So from a JS perspective that means `null` ==
    `undefined` == `{}` == `''`. All 4 of these values in an object are converted to an empty string. If you write a new object with an empty value?
